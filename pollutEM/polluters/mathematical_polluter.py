@@ -5,7 +5,7 @@ from .base_polluter import BasePolluter
 
 
 class ScalingPolluter(BasePolluter):
-    def __init__(self, multiplier: float):
+    def __init__(self, multiplier: float = 1.0):
         self.multiplier = multiplier
         super().__init__(self.apply_linear_transform)
 
@@ -23,7 +23,7 @@ class ScalingPolluter(BasePolluter):
 
 
 class ShiftingPolluter(BasePolluter):
-    def __init__(self, shift_amount: Union[int, float]):
+    def __init__(self, shift_amount: Union[int, float] = 1.0):
         self.shift_amount = shift_amount
         super().__init__(self.apply_shift)
 
@@ -82,4 +82,3 @@ class LogTransformationPolluter(BasePolluter):
 
 # AffineTransformationPolluter
 # ExponentialTransformationPolluter
-#
