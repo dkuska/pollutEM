@@ -3,8 +3,8 @@ flake8
 isort
 loguru
 numpy
+pandas
 pip
-polars
 pre-commit
 python-dotenv
 tqdm

@@ -1,6 +1,6 @@
-from typing import Type, Optional
+from typing import Optional
 import numpy as np
-import polars as pl
+import pandas as pd
 
 from .base_polluter import BasePolluter
 
@@ -11,7 +11,7 @@ class ZScoreNormalizationPolluter(BasePolluter):
         self.std = std
         super().__init__(self.apply_zscore)
 
-    def apply_zscore(self, df: pl.DataFrame, column: str):
+    def apply_zscore(self, df: pd.DataFrame, column: str):
         if self.mean is None:
             self.mean = df[column].mean()
         if self.std is None:
@@ -19,8 +19,16 @@ class ZScoreNormalizationPolluter(BasePolluter):
 
         return (df[column] - self.mean) / (self.std if self.std != 0 else 1)
 
-    def _get_type_mapping(self) -> dict[Type[pl.DataType], Type[pl.DataType]]:
-        return {pl.Float64: pl.Float64, pl.Int64: pl.Float64}
+    def _get_type_mapping(self) -> dict:
+        return {
+            np.float64: np.float64,
+            np.int64: np.float64,
+            np.int32: np.float32,
+            np.float32: np.float32,
+        }
+
+    def _get_allowed_levels(self) -> list[str]:
+        return ["column"]
 
 
 class MinMaxNormalizationPolluter(BasePolluter):
@@ -29,7 +37,7 @@ class MinMaxNormalizationPolluter(BasePolluter):
         self.max_val = max_val
         super().__init__(self.apply_minmax)
 
-    def apply_minmax(self, df: pl.DataFrame, column: str):
+    def apply_minmax(self, df: pd.DataFrame, column: str):
         if self.min_val is None:
             self.min_val = df[column].min()
         if self.max_val is None:
@@ -40,5 +48,11 @@ class MinMaxNormalizationPolluter(BasePolluter):
             return np.zeros(len(df))
         return (df[column] - self.min_val) / denominator
 
-    def _get_type_mapping(self) -> dict[Type[pl.DataType], Type[pl.DataType]]:
-        return {pl.Float64: pl.Float64, pl.Int64: pl.Float64}
+    def _get_type_mapping(self) -> dict:
+        return {
+            np.float64: np.float64,
+            np.int64: np.float64,
+        }
+
+    def _get_allowed_levels(self) -> list[str]:
+        return ["column"]

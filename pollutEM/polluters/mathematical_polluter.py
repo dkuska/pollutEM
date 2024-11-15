@@ -1,11 +1,10 @@
-from typing import Type
+from typing import Union
 import numpy as np
-import polars as pl
 
 from .base_polluter import BasePolluter
 
 
-class LinearTransformationPolluter(BasePolluter):
+class ScalingPolluter(BasePolluter):
     def __init__(self, multiplier: float):
         self.multiplier = multiplier
         super().__init__(self.apply_linear_transform)
@@ -13,8 +12,14 @@ class LinearTransformationPolluter(BasePolluter):
     def apply_linear_transform(self, value):
         return value * self.multiplier
 
-    def _get_type_mapping(self) -> dict[Type[pl.DataType], Type[pl.DataType]]:
-        return {pl.Float64: pl.Float64, pl.Int64: pl.Int64}
+    def _get_type_mapping(self) -> dict:
+        return {
+            np.float64: np.float64,
+            np.int64: np.int64,
+        }
+
+    def _get_allowed_levels(self) -> list[str]:
+        return ["cell", "row", "column"]
 
 
 class ShiftingPolluter(BasePolluter):
@@ -25,20 +30,14 @@ class ShiftingPolluter(BasePolluter):
     def apply_shift(self, value):
         return value + self.shift_amount
 
-    def _get_type_mapping(self) -> dict[Type[pl.DataType], Type[pl.DataType]]:
-        return {pl.Float64: pl.Float64, pl.Int64: pl.Int64}
+    def _get_type_mapping(self) -> dict:
+        return {
+            np.float64: np.float64,
+            np.int64: np.int64,
+        }
 
-
-class ExponentiationPolluter(BasePolluter):
-    def __init__(self, power: float):
-        self.power = power
-        super().__init__(self.apply_exponent)
-
-    def apply_exponent(self, value):
-        return float(value**self.power)
-
-    def _get_type_mapping(self) -> dict[Type[pl.DataType], Type[pl.DataType]]:
-        return {pl.Float64: pl.Float64, pl.Int64: pl.Float64}
+    def _get_allowed_levels(self) -> list[str]:
+        return ["cell", "row", "column"]
 
 
 class ReciprocalPolluter(BasePolluter):
@@ -48,8 +47,14 @@ class ReciprocalPolluter(BasePolluter):
     def apply_reciprocal(self, value):
         return 1.0 / value if value != 0 else float("inf")
 
-    def _get_type_mapping(self) -> dict[Type[pl.DataType], Type[pl.DataType]]:
-        return {pl.Float64: pl.Float64, pl.Int64: pl.Float64}
+    def _get_type_mapping(self) -> dict:
+        return {
+            np.float64: np.float64,
+            np.int64: np.float64,
+        }
+
+    def _get_allowed_levels(self) -> list[str]:
+        return ["cell", "row", "column"]
 
 
 class LogTransformationPolluter(BasePolluter):
@@ -63,5 +68,16 @@ class LogTransformationPolluter(BasePolluter):
             value = np.finfo(float).eps
         return float(np.log(value) / np.log(self.base))
 
-    def _get_type_mapping(self) -> dict[Type[pl.DataType], Type[pl.DataType]]:
-        return {pl.Float64: pl.Float64, pl.Int64: pl.Float64}
+    def _get_type_mapping(self) -> dict:
+        return {
+            np.float64: np.float64,
+            np.int64: np.float64,
+        }
+
+    def _get_allowed_levels(self) -> list[str]:
+        return ["cell", "row", "column"]
+
+
+# AffineTransformationPolluter
+# ExponentialTransformationPolluter
+#

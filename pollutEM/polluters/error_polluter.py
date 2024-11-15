@@ -1,6 +1,4 @@
-from typing import Type
 import numpy as np
-import polars as pl
 
 from .base_polluter import BasePolluter
 
@@ -16,9 +14,17 @@ class GaussianNoisePolluter(BasePolluter):
             return value + np.random.normal(self.mean, self.std_dev)
         return value
 
-    def _get_type_mapping(self) -> dict[Type[pl.DataType], Type[pl.DataType]]:
-        # Since adding Gaussian noise produces floating point results
+    def _get_allowed_levels(self) -> list[str]:
+        return ["cell", "row", "column"]
+
+    def _get_type_mapping(self) -> dict:
         return {
-            pl.Int64: pl.Float64,  # integers become floats after adding noise
-            pl.Float64: pl.Float64,  # floats remain floats
+            np.float64: np.float64,
+            np.int64: np.float64,
         }
+
+
+# UniformNoisePolluter
+# SaltAndPepperNoisePolluter
+# MissingValuesPolluter
+# IntegerOverflowPolluter

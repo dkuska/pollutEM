@@ -1,5 +1,6 @@
-from typing import Type
-import polars as pl
+import numpy as np
+import pandas as pd
+from typing import Union
 
 from .base_polluter import BasePolluter
 
@@ -15,13 +16,18 @@ class ScientificNotationPolluter(BasePolluter):
             return f"{value:.2e}"
         return value
 
-    def _get_type_mapping(self) -> dict[Type[pl.DataType], Type[pl.DataType]]:
+    def _get_type_mapping(self) -> dict:
         # Since we're converting numbers to scientific notation strings
         return {
-            pl.Int64: pl.Utf8,  # integers will become strings
-            pl.Float64: pl.Utf8,  # floats will become strings
-            pl.Utf8: pl.Utf8,  # strings pass through unchanged
+            np.float64: str,
+            np.int64: str,
+            str: str,
+            object: str,
+            pd.StringDtype: pd.StringDtype,
         }
+
+    def _get_allowed_levels(self) -> list[str]:
+        return ["cell", "row", "column"]
 
 
 # Separator Conversion
@@ -50,8 +56,17 @@ class SeparatorConversionPolluter(BasePolluter):
                 return value
         return str(value)
 
-    def _get_type_mapping(self) -> dict[Type[pl.DataType], Type[pl.DataType]]:
-        return {pl.Float64: pl.Utf8, pl.Int64: pl.Utf8, pl.Utf8: pl.Utf8}
+    def _get_type_mapping(self) -> dict:
+        return {
+            np.float64: str,
+            np.int64: str,
+            str: str,
+            object: str,
+            pd.StringDtype: pd.StringDtype,
+        }
+
+    def _get_allowed_levels(self) -> list[str]:
+        return ["cell", "row", "column"]
 
 
 # Roman Numeral Conversion
