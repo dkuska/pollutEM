@@ -3,7 +3,7 @@ flake8
 isort
 loguru
 pip
+pre-commit
 python-dotenv
 tqdm
 typer
--e .
