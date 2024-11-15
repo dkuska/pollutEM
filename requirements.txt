@@ -2,7 +2,9 @@ black
 flake8
 isort
 loguru
+numpy
 pip
+polars
 pre-commit
 python-dotenv
 tqdm
