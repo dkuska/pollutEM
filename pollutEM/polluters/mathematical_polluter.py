@@ -70,6 +70,8 @@ class LogTransformationPolluter(BasePolluter):
 
     def _get_type_mapping(self) -> dict:
         return {
+            int: float,
+            float: float,
             np.float64: np.float64,
             np.int64: np.float64,
         }
