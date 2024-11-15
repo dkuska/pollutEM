@@ -1,1 +1,1 @@
-from pollutEM import config  # noqa: F401
+from pollutEM.utils import config  # noqa: F401

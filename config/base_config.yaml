@@ -1,0 +1,38 @@
+dataset:
+  dataset_path: "data/earthquakes/features.csv"
+  label_path: "data/earthquakes/matches_closed.csv"
+
+pollutions:
+  # Define individual pollution types with levels and stages
+  - name: "random_noise"
+    level: "cell"  # Options: cell, column, record
+    params:        # Parameters specific to this pollution type
+      noise_level: 0.1
+    apply_at:      # Stages where this pollution should be applied
+      - train      # Options: train, evaluate, both
+
+  - name: "missing_values"
+    level: "column"
+    params:
+      missing_rate: 0.2
+    apply_at:
+      - evaluate
+
+  - name: "swap_rows"
+    level: "record"
+    params:
+      swap_fraction: 0.05
+    apply_at:
+      - both
+
+matchers:
+  # List of entity matching models to train and evaluate
+  - name: "deepmatcher"
+    params:
+      epochs: 10
+      learning_rate: 0.001
+
+  - name: "chatgpt"
+    params:
+      api_key: "your_api_key_here"
+      temperature: 0.7
