@@ -1,3 +1,5 @@
+from typing import Union, Optional
+
 import numpy as np
 
 from .base_polluter import BasePolluter
@@ -5,9 +7,22 @@ from .base_polluter import BasePolluter
 
 class RoundingPolluter(BasePolluter):
     # TODO: Add different strategies: Rounding, Floor, Ceiling
-    def __init__(self, decimal_places: int = 0):
+    def __init__(
+        self,
+        decimal_places: int = 0,
+        level: str = "column",
+        probability: Optional[float] = None,
+        indices: Optional[Union[list[int], list[str]]] = None,
+        seed: Optional[int] = None,
+    ):
         self.decimal_places = decimal_places
-        super().__init__(self.round_transform)
+        super().__init__(
+            transformation=self.round_transform,
+            level=level,
+            probability=probability,
+            indices=indices,
+            seed=seed,
+        )
 
     def round_transform(self, value):
         if isinstance(value, float):

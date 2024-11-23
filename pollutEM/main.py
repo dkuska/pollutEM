@@ -30,17 +30,7 @@ def main(config_file):
         )
         click.echo(f"Loaded polluter with params: {pollution_params}")
 
-        if pollution_params["level"] == "column":
-            dataset = polluter.apply(dataset, pollution_params["column_names"])
-            click.echo(
-                f"Applied polluter {pollution_params['name']} to columns {pollution_params['column_names']}"
-            )
-        elif pollution_params["level"] == "cell":
-            click.echo("Application Level `cell` not yet implemented")
-        elif pollution_params["level"] == "row":
-            click.echo("Application Level `row` not yet implemented")
-        else:
-            raise ValueError(f"Invalid value for `level`: {pollution_params['level']}")
+        dataset = polluter.apply(dataset)
 
 
 if __name__ == "__main__":

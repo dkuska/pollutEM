@@ -1,2 +1,0 @@
-# DigitPermutationPolluter
-# OCRErrorPolluter

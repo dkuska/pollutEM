@@ -4,16 +4,29 @@ dataset:
 
 pollutions:
   - name: "GaussianNoise"
-    level: "column"
-    column_names:
-      - depth
     params:
+      level: "column"
+      indices:
+        - depth
+      mean: 1.0
+      std_dev: 0.0
+
+  - name: "GaussianNoise"
+    params:
+      level: "column"
+      probability: 0.5
       mean: 1.0
       std_dev: 0.0
 
   - name: "RoundingPolluter"
-    level: "column"
-    column_names:
-      - azimuthal_gap
     params:
+      level: "column"
+      indices:
+        - "azimuthal_gap"
+      decimal_places: 2
+
+  - name: "RoundingPolluter"
+    params:
+      level: "column"
+      probability: 0.5
       decimal_places: 2
