@@ -25,9 +25,7 @@ class RoundingPolluter(BasePolluter):
         )
 
     def round_transform(self, value):
-        if isinstance(value, float):
-            return round(value, self.decimal_places)
-        return value
+        return round(value, self.decimal_places)
 
     def _get_type_mapping(self) -> dict:
         # Rounding preserves the original numeric type

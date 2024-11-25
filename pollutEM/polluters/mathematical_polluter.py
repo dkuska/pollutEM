@@ -10,7 +10,7 @@ class ScalingPolluter(BasePolluter):
         multiplier: float = 1.0,
         level: str = "column",
         probability: Optional[float] = None,
-        indices: Optional[Union[list[int], list[str]]] = None,
+        indices: Optional[Union[list[int]]] = None,
         seed: Optional[int] = None,
     ):
         self.multiplier = multiplier

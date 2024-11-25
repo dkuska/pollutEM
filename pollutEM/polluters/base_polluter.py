@@ -118,20 +118,15 @@ class BasePolluter(ABC):
         if self.seed is not None:
             np.random.seed(self.seed)
 
-        # Get columns to transform
-        target_columns = self._get_target_columns(df)
-        if not target_columns:
-            return df  # No columns to transform
-
         # Apply transformation based on level
         if self.level == "column":
+            target_columns = self._get_target_columns(df)
             df = self._apply_column(df, target_columns)
         elif self.level == "row":
             target_rows = self._get_target_rows(df)
-            df = self._apply_row(df, target_rows, target_columns)
+            df = self._apply_row(df, target_rows)
         elif self.level == "cell":
-            target_rows = self._get_target_rows(df)
-            df = self._apply_cell(df, target_rows, target_columns)
+            df = self._apply_cell(df)
 
         return df
 
@@ -158,21 +153,41 @@ class BasePolluter(ABC):
             df[column] = transformed_values.astype(output_type)
         return df
 
-    def _apply_row(self, df: pd.DataFrame, rows: list[int], columns: list[str]) -> pd.DataFrame:
+    def _apply_row(self, df: pd.DataFrame, rows: list[int]) -> pd.DataFrame:
         """Apply transformation to selected rows."""
-        for column in columns:
+        # Infer columns with valid types
+        applicable_columns = [
+            col for col in df.columns if self._is_valid_column_type(df[col].dtype)
+        ]
+
+        for column in applicable_columns:
             output_type = self._validate_column_type(df[column].dtype)
-            transformed_values = df.loc[rows, column].apply(self.transformation)
-            df.loc[rows, column] = transformed_values.astype(output_type)
+
+            # Filter applicable rows where the type matches
+            applicable_rows = [row for row in rows if pd.notna(df.at[row, column])]
+            if not applicable_rows:
+                continue  # Skip column if no applicable rows
+
+            transformed_values = df.loc[applicable_rows, column].apply(self.transformation)
+            df.loc[applicable_rows, column] = transformed_values.astype(output_type)
         return df
 
-    def _apply_cell(self, df: pd.DataFrame, rows: list[int], columns: list[str]) -> pd.DataFrame:
+    def _apply_cell(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply transformation to selected cells."""
-        for column in columns:
-            for row in rows:
+        for column in df.columns:
+            if not self._is_valid_column_type(df[column].dtype):
+                continue  # Skip column if type is not valid
+
+            output_type = self._validate_column_type(df[column].dtype)
+
+            for row in df.index:
                 if np.random.random() < self.probability:
-                    output_type = self._validate_column_type(df[column].dtype)
-                    df.at[row, column] = self.transformation(df.at[row, column]).astype(
-                        output_type
-                    )
+                    try:
+                        original_value = df.at[row, column]
+                        if pd.notna(original_value):  # Skip NaN or None values
+                            transformed_value = self.transformation(original_value)
+                            df.at[row, column] = transformed_value.astype(output_type)
+                    except ValueError:
+                        # Skip transformation if there's a type mismatch
+                        pass
         return df
