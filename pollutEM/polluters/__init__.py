@@ -1,9 +1,10 @@
-from .error_polluter import GaussianNoisePolluter, UniformNoisePolluter
+from .error_polluter import GaussianNoisePolluter, MissingValuePolluter, UniformNoisePolluter
 from .mathematical_polluter import ScalingPolluter, ShiftingPolluter, ScalingShiftingPolluter
 from .precision_polluter import RoundingPolluter
 
 __all__ = [
     "GaussianNoisePolluter",
+    "MissingValuePolluter",
     "RoundingPolluter",
     "ScalingPolluter",
     "ScalingShiftingPolluter",
@@ -15,6 +16,8 @@ __all__ = [
 def get_polluter(polluter_name, **kwargs):
     if polluter_name == "GaussianNoise":
         return GaussianNoisePolluter(**kwargs)
+    elif polluter_name == "MissingValue":
+        return MissingValuePolluter(**kwargs)
     elif polluter_name == "Rounding":
         return RoundingPolluter(**kwargs)
     elif polluter_name == "Scaling":
