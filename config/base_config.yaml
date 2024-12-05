@@ -1,7 +1,3 @@
-dataset:
-  dataset_path: "../data/earthquakes/features.csv"
-  label_path: "../data/earthquakes/matches_closed.csv"
-
 pollutions:
   - name: "GaussianNoise"
     params:
