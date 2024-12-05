@@ -32,3 +32,16 @@ pollutions:
     applicable_columns:
       - "depth"
       - "mag_value"
+
+  # MissingValue pollution
+  - name: "MissingValue"
+    params:
+      level: "column"
+      missing_ratio: 0.1  # 10% chance of being missing
+    applicable_columns:
+      - "depth_uncertainty"
+      - "horizontal_uncertainty"
+      - "standard_error"
+      - "mag_uncertainty"
+      - "mag_type"
+      - "mag_station_count"
