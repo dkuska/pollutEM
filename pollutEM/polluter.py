@@ -7,6 +7,9 @@ import yaml
 import sys
 import logging
 
+from polluters import get_polluter
+
+
 # Set up logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -17,7 +20,6 @@ def load_config(config_path: Path) -> Dict[str, Any]:
     try:
         with open(config_path) as f:
             config = yaml.safe_load(f)
-        # Add config validation logic here
         return config
     except Exception as e:
         logger.error(f"Failed to load configuration: {str(e)}")
@@ -27,9 +29,15 @@ def load_config(config_path: Path) -> Dict[str, Any]:
 def apply_pollutions(df: pd.DataFrame, config: Dict[str, Any]) -> pd.DataFrame:
     """Apply the specified pollutions to the dataset."""
     try:
-        # Add pollution logic here based on config
-        # This is where you'd implement different types of data pollution
         polluted_df = df.copy()
+
+        for pollution_params in config.get("pollutions", []):
+            polluter = get_polluter(
+                polluter_name=pollution_params["name"], **pollution_params["params"]
+            )
+            logger.info(f"Applying polluter with params: {pollution_params}")
+            polluted_df = polluter.apply(polluted_df)
+
         logger.info("Applying pollutions to dataset...")
         return polluted_df
     except Exception as e:
