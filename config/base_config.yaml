@@ -18,14 +18,14 @@ pollutions:
       mean: 1.0
       std_dev: 0.0
 
-  - name: "RoundingPolluter"
+  - name: "Rounding"
     params:
       level: "column"
       indices:
         - "azimuthal_gap"
       decimal_places: 2
 
-  - name: "RoundingPolluter"
+  - name: "Rounding"
     params:
       level: "column"
       probability: 0.5
