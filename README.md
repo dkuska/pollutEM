@@ -25,14 +25,21 @@ python pipeline.py \
 
 ### Parameters
 
---dataset-path: Path to the original (clean) dataset in CSV format.
---master-config-path: Path to the master configuration YAML file containing the pollution definitions.
---config-dir: Directory where individual pollution configurations will be saved after random sampling from the master configuration.
---samples-per-size: Number of random combinations of columns to generate for each pollution configuration size (default: 5).
---model-path: Path to the trained model that will be evaluated.
---test-split-path: Path to the test split CSV file. It should contain record pair IDs (p1, p2) along with the ground truth prediction column.
---results-dir: Directory where evaluation results (F1 scores) and reports will be stored.
---mode: Mode of feature generation for the evaluation. It can be one of:
+`--dataset-path`: Path to the original (clean) dataset in CSV format.
+
+`--master-config-path`: Path to the master configuration YAML file containing the pollution definitions.
+
+`--config-dir`: Directory where individual pollution configurations will be saved after random sampling from the master configuration.
+
+`--samples-per-size`: Number of random combinations of columns to generate for each pollution configuration size (default: 5).
+
+`--model-path`: Path to the trained model that will be evaluated.
+
+`--test-split-path`: Path to the test split CSV file. It should contain record pair IDs (p1, p2) along with the ground truth prediction column.
+
+`--results-dir`: Directory where evaluation results (F1 scores) and reports will be stored.
+
+`--mode`: Mode of feature generation for the evaluation. It can be one of:
     original: Use the original dataset.
     polluted: Use the polluted dataset.
     mixed: Use a combination of both the original and polluted datasets.
@@ -43,7 +50,7 @@ Generate Pollution Configurations: The script starts by generating individual po
 
 Apply Pollution to Dataset: For each generated configuration, the script applies the defined pollution to the original dataset. This step generates multiple polluted versions of the dataset based on the different pollution configurations.
 
-Evaluate Model: The model is then evaluated on each polluted dataset. The script uses the provided test split (test-split-path) to generate feature vectors from the polluted data and applies the trained model. The F1 score of the model’s predictions is calculated and stored in the results directory.
+Evaluate Model: The model is then evaluated on each polluted dataset. The script uses the provided test split (`test-split-path`) to generate feature vectors from the polluted data and applies the trained model. The F1 score of the model’s predictions is calculated and stored in the results directory.
 
 Generate Reports and Visualizations: After all evaluations are complete, the script generates F1 score reports and creates visualizations to summarize the model’s performance across different pollution configurations and modes.
 
