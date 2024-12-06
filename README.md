@@ -11,6 +11,7 @@ Created as part of the `Table Representation Learning` Seminar at Hasso Plattner
 The pipeline.py script orchestrates a complete workflow for evaluating an entity matching model's robustness to polluted data. It generates multiple configurations for data pollution, applies these configurations to a dataset, evaluates the model's performance on the polluted datasets, and generates visualizations and reports.
 Usage
 
+```bash
 python pipeline.py \
     --dataset-path /path/to/original/dataset.csv \
     --master-config-path /path/to/master_config.yaml \
@@ -19,84 +20,32 @@ python pipeline.py \
     --model-path /path/to/trained/model.pkl \
     --test-split-path /path/to/test_split.csv \
     --results-dir /path/to/output/results \
-    --mode original
+    --mode mixed
+```
 
 ### Parameters
 
-    --dataset-path: Path to the original (clean) dataset in CSV format.
-    --master-config-path: Path to the master configuration YAML file containing the pollution definitions.
-    --config-dir: Directory where individual pollution configurations will be saved after random sampling from the master configuration.
-    --samples-per-size: Number of random combinations of columns to generate for each pollution configuration size (default: 5).
-    --model-path: Path to the trained model that will be evaluated.
-    --test-split-path: Path to the test split CSV file. It should contain record pair IDs (p1, p2) along with the ground truth prediction column.
-    --results-dir: Directory where evaluation results (F1 scores) and reports will be stored.
-    --mode: Mode of feature generation for the evaluation. It can be one of:
-        original: Use the original dataset.
-        polluted: Use the polluted dataset.
-        mixed: Use a combination of both the original and polluted datasets.
+--dataset-path: Path to the original (clean) dataset in CSV format.
+--master-config-path: Path to the master configuration YAML file containing the pollution definitions.
+--config-dir: Directory where individual pollution configurations will be saved after random sampling from the master configuration.
+--samples-per-size: Number of random combinations of columns to generate for each pollution configuration size (default: 5).
+--model-path: Path to the trained model that will be evaluated.
+--test-split-path: Path to the test split CSV file. It should contain record pair IDs (p1, p2) along with the ground truth prediction column.
+--results-dir: Directory where evaluation results (F1 scores) and reports will be stored.
+--mode: Mode of feature generation for the evaluation. It can be one of:
+    original: Use the original dataset.
+    polluted: Use the polluted dataset.
+    mixed: Use a combination of both the original and polluted datasets.
 
 ### Workflow Overview
 
-    Generate Pollution Configurations: The script starts by generating individual pollution configurations from a master configuration file. These configurations define how different pollutions (e.g., noise, rounding) should be applied to various columns in the dataset. Random combinations of applicable columns are generated and saved as individual configuration files.
+Generate Pollution Configurations: The script starts by generating individual pollution configurations from a master configuration file. These configurations define how different pollutions (e.g., noise, rounding) should be applied to various columns in the dataset. Random combinations of applicable columns are generated and saved as individual configuration files.
 
-    Apply Pollution to Dataset: For each generated configuration, the script applies the defined pollution to the original dataset. This step generates multiple polluted versions of the dataset based on the different pollution configurations.
+Apply Pollution to Dataset: For each generated configuration, the script applies the defined pollution to the original dataset. This step generates multiple polluted versions of the dataset based on the different pollution configurations.
 
-    Evaluate Model: The model is then evaluated on each polluted dataset. The script uses the provided test split (test-split-path) to generate feature vectors from the polluted data and applies the trained model. The F1 score of the model’s predictions is calculated and stored in the results directory.
+Evaluate Model: The model is then evaluated on each polluted dataset. The script uses the provided test split (test-split-path) to generate feature vectors from the polluted data and applies the trained model. The F1 score of the model’s predictions is calculated and stored in the results directory.
 
-    Generate Reports and Visualizations: After all evaluations are complete, the script generates F1 score reports and creates visualizations to summarize the model’s performance across different pollution configurations and modes.
-
-### Example Workflow
-
-    Generate Pollution Configurations:
-
-    python pipeline.py \
-        --dataset-path /data/features.csv \
-        --master-config-path /configs/master_pollution_config.yaml \
-        --config-dir /output/configs \
-        --samples-per-size 5 \
-        --model-path /models/your_model.pkl \
-        --test-split-path /data/test_split.csv \
-        --results-dir /output/results \
-        --mode original
-
-    This command will generate random pollution configurations from the master config, apply them to the dataset, and evaluate the model's performance on the polluted datasets.
-
-    Visualizations and Reports: Once the evaluations are done, the results (F1 scores) and reports will be saved in /output/results/. The script will generate:
-        f1_scores_report.csv: A CSV containing the F1 scores for each evaluation.
-        Visualizations (e.g., graphs) summarizing the model's performance.
-
-Example Master Configuration Format
-
-The master configuration YAML file should define the pollution types and their applicable columns. Example:
-
-pollutions:
-
-- name: "GaussianNoise"
-    params:
-      level: "column"
-      mean: 0.0
-      std_dev: 0.05
-    applicable_columns:
-  - "depth"
-  - "depth_uncertainty"
-
-- name: "Rounding"
-    params:
-      level: "column"
-      decimal_places: 2
-    applicable_columns:
-  - "depth"
-  - "mag_value"
-
-Each pollution includes:
-
-    name: Type of pollution (e.g., "GaussianNoise", "Rounding").
-    params: Parameters for the pollution type.
-    applicable_columns: Columns in the dataset that the pollution can be applied to.
-
-Visualizations
-
-Once the evaluations are complete, the script will generate visualizations in the results directory to help analyze the model’s performance across various configurations. This includes performance graphs and other insights based on the generated F1 scores.
+Generate Reports and Visualizations: After all evaluations are complete, the script generates F1 score reports and creates visualizations to summarize the model’s performance across different pollution configurations and modes.
 
 ## Configuration Generator
 
