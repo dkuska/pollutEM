@@ -1,8 +1,15 @@
 import os
+import logging
 
 import click
 import pandas as pd
 from sklearn.metrics import f1_score
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - EVALUATOR - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
 def generate_test_features(
@@ -92,18 +99,18 @@ def evaluate(original, polluted, test_split, model, mode, results_dir):
     """
     CLI Application to evaluate a model's performance on polluted data.
     """
-    click.echo("Loading datasets...")
+    logger.info("Loading datasets...")
     original_data = pd.read_csv(original)
     polluted_data = pd.read_csv(polluted)
     test_split_df = pd.read_csv(test_split)
 
-    click.echo("Generating test features...")
+    logger.info("Generating test features...")
     features = generate_test_features(original_data, polluted_data, test_split_df, mode)
 
-    click.echo("Applying model (mocked)...")
+    logger.info("Applying model (mocked)...")
     predictions = mock_model_prediction(features)
 
-    click.echo("Calculating F1 Score...")
+    logger.info("Calculating F1 Score...")
     ground_truth = test_split_df["prediction"].values
     f1 = f1_score(ground_truth, predictions)
 
@@ -124,7 +131,7 @@ def evaluate(original, polluted, test_split, model, mode, results_dir):
         results_df = pd.DataFrame([result])
         results_df.to_csv(results_file, mode="a", header=False, index=False)
 
-    print(f"Evaluation complete. F1 Score: {f1}")
+    logger.info(f"Evaluation complete. F1 Score: {f1}")
 
 
 if __name__ == "__main__":

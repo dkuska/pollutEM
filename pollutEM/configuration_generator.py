@@ -5,6 +5,14 @@ import random
 from itertools import combinations
 from pathlib import Path
 from typing import List, Dict, Any
+import logging
+
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - GENERATOR - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
 def load_master_config(config_path: str) -> Dict[str, Any]:
@@ -54,10 +62,10 @@ def generate_configs(
     applicable_columns = [col for col in template["applicable_columns"] if col in all_columns]
 
     if not applicable_columns:
-        click.echo(f"Warning: No applicable columns found for {name}")
+        logger.info(f"Warning: No applicable columns found for {name}")
         return
 
-    click.echo(f"  Applicable columns: {', '.join(applicable_columns)}")
+    logger.info(f"  Applicable columns: {', '.join(applicable_columns)}")
 
     # Generate configurations for different combination sizes
     for r in range(1, len(applicable_columns) + 1):
@@ -113,9 +121,9 @@ def main(dataset_path: str, master_config_path: str, output_dir: str, samples_pe
 
     # Generate configurations for each pollution type
     for name, template in pollution_templates.items():
-        click.echo(f"Generating configurations for {name}")
+        logger.info(f"Generating configurations for {name}")
         param_str = ", ".join(f"{k}={v}" for k, v in template["params"].items() if k != "level")
-        click.echo(f"  With parameters: {param_str}")
+        logger.info(f"  With parameters: {param_str}")
         generate_configs(name, template, columns, output_path, samples_per_size)
 
 

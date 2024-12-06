@@ -2,10 +2,18 @@ import os
 import subprocess
 import pandas as pd
 import click
+import logging
+
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - PIPELINE - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
 def generate_configurations(dataset_path, master_config_path, output_dir, samples_per_size):
-    print("Generating configurations...")
+    logger.info("Generating configurations...")
     subprocess.run(
         [
             "python",
@@ -23,7 +31,7 @@ def generate_configurations(dataset_path, master_config_path, output_dir, sample
 
 
 def apply_pollution_to_dataset(original_dataset, config_path, polluted_output):
-    print(f"Applying pollution using config {config_path}...")
+    logger.info(f"Applying pollution using config {config_path}...")
     subprocess.run(
         [
             "python",
@@ -39,7 +47,7 @@ def apply_pollution_to_dataset(original_dataset, config_path, polluted_output):
 
 
 def evaluate_model(model_path, original_dataset, polluted_dataset, test_split, mode, results_dir):
-    print("Evaluating model...")
+    logger.info("Evaluating model...")
     subprocess.run(
         [
             "python",
@@ -61,7 +69,7 @@ def evaluate_model(model_path, original_dataset, polluted_dataset, test_split, m
 
 
 def generate_visualizations(results_dir):
-    print("Generating visualizations...")
+    logger.info("Generating visualizations...")
     f1_df = pd.read_csv(os.path.join(results_dir, "evaluation_results.csv"))
     import matplotlib.pyplot as plt
 

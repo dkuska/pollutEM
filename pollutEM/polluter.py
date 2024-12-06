@@ -11,7 +11,9 @@ from polluters import get_polluter
 
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - POLLUTER - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
