@@ -2,10 +2,12 @@ black
 flake8
 isort
 loguru
+matplotlib
 numpy
 pandas
 pip
 pre-commit
 python-dotenv
+scikit-learn
 tqdm
 typer

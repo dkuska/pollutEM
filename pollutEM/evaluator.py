@@ -1,3 +1,5 @@
+import os
+
 import click
 import pandas as pd
 from sklearn.metrics import f1_score
@@ -83,7 +85,10 @@ def mock_model_prediction(features):
     type=click.Choice(["original", "polluted", "mixed"], case_sensitive=False),
     help="Mode for test feature generation",
 )
-def evaluate(original, polluted, test_split, model, mode):
+@click.option(
+    "--results-dir", type=str, required=True, help="Directory to save evaluation results"
+)
+def evaluate(original, polluted, test_split, model, mode, results_dir):
     """
     CLI Application to evaluate a model's performance on polluted data.
     """
@@ -101,7 +106,25 @@ def evaluate(original, polluted, test_split, model, mode):
     click.echo("Calculating F1 Score...")
     ground_truth = test_split_df["prediction"].values
     f1 = f1_score(ground_truth, predictions)
-    click.echo(f"F1 Score: {f1}")
+
+    # Prepare result data
+    result = {"original": original, "polluted": polluted, "mode": mode, "f1_score": f1}
+
+    # Ensure the results directory exists
+    os.makedirs(results_dir, exist_ok=True)
+
+    # Store results in a CSV
+    results_file = os.path.join(results_dir, "evaluation_results.csv")
+    if not os.path.exists(results_file):
+        # If file doesn't exist, write headers
+        results_df = pd.DataFrame([result])
+        results_df.to_csv(results_file, mode="w", index=False)
+    else:
+        # If file exists, append results
+        results_df = pd.DataFrame([result])
+        results_df.to_csv(results_file, mode="a", header=False, index=False)
+
+    print(f"Evaluation complete. F1 Score: {f1}")
 
 
 if __name__ == "__main__":
