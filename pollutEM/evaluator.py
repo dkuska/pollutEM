@@ -1,71 +1,108 @@
-#!/usr/bin/env python3
 import click
 import pandas as pd
-from pathlib import Path
-from typing import List
-import logging
-import sys
-from datetime import datetime
+from sklearn.metrics import f1_score
 
-# Set up logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+
+def generate_test_features(
+    original_data: pd.DataFrame,
+    polluted_data: pd.DataFrame,
+    test_split: pd.DataFrame,
+    mode: str = "mixed",
+) -> pd.DataFrame:
+    """
+    Generate test features by pairing records based on test split.
+
+    Args:
+        original_data (pd.DataFrame): Original dataset features with an `id` column.
+        polluted_data (pd.DataFrame): Polluted dataset features with an `id` column.
+        test_split (pd.DataFrame): Test split containing `p1`, `p2`, and `prediction` columns.
+        mode (str): Mode for feature selection. Options:
+            - "original": Use both records from the original dataset.
+            - "polluted": Use both records from the polluted dataset.
+            - "mixed": Use one record from each dataset.
+
+    Returns:
+        pd.DataFrame: Combined test features dataframe with the test split `p1`, `p2`, and `prediction` included.
+    """
+    if mode not in {"original", "polluted", "mixed"}:
+        raise ValueError("Invalid mode. Choose from 'original', 'polluted', or 'mixed'.")
+
+    if "id" not in original_data.columns or "id" not in polluted_data.columns:
+        raise KeyError("Both `original_data` and `polluted_data` must contain an `id` column.")
+
+    original_data_p1 = original_data.add_suffix("_p1").rename(columns={"id_p1": "p1"})
+    original_data_p2 = original_data.add_suffix("_p2").rename(columns={"id_p2": "p2"})
+    polluted_data_p1 = polluted_data.add_suffix("_p1").rename(columns={"id_p1": "p1"})
+    polluted_data_p2 = polluted_data.add_suffix("_p2").rename(columns={"id_p2": "p2"})
+
+    if mode == "original":
+        test_split = test_split.merge(original_data_p1, on="p1").merge(original_data_p2, on="p2")
+    elif mode == "polluted":
+        test_split = test_split.merge(polluted_data_p1, on="p1").merge(polluted_data_p2, on="p2")
+    elif mode == "mixed":
+        test_split = test_split.merge(original_data_p1, on="p1").merge(polluted_data_p2, on="p2")
+    return test_split
+
+
+def mock_model_prediction(features):
+    """
+    Mock function to simulate model predictions.
+    For demonstration, we return random predictions.
+    Replace this with the actual model logic.
+    """
+    import numpy as np
+
+    return np.random.randint(0, 2, size=len(features))
 
 
 @click.command()
 @click.option(
-    "--clean-data",
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    "--original",
     required=True,
-    help="Path to clean dataset",
+    type=click.Path(exists=True),
+    help="Path to the original dataset CSV file",
 )
 @click.option(
-    "--polluted-data",
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    "--polluted",
     required=True,
-    multiple=True,
-    help="Paths to polluted datasets (can be specified multiple times)",
+    type=click.Path(exists=True),
+    help="Path to the polluted dataset CSV file",
 )
 @click.option(
-    "--names",
-    type=str,
-    multiple=True,
-    help="Names for each polluted dataset (must match number of polluted datasets)",
+    "--test_split",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to the test split CSV file",
 )
 @click.option(
-    "--output-dir",
-    type=click.Path(file_okay=False, path_type=Path),
-    default=Path("analysis_results"),
-    help="Directory for output files (default: analysis_results)",
+    "--model", required=True, type=click.Path(), help="Path to the model file (mocked for now)"
 )
-def main(clean_data: Path, polluted_data: List[Path], names: List[str], output_dir: Path) -> None:
+@click.option(
+    "--mode",
+    required=True,
+    type=click.Choice(["original", "polluted", "mixed"], case_sensitive=False),
+    help="Mode for test feature generation",
+)
+def evaluate(original, polluted, test_split, model, mode):
     """
-    Analyze differences between clean and polluted datasets.
-
-    This command loads the clean dataset and one or more polluted versions,
-    performs analysis, and generates plots and a report.
+    CLI Application to evaluate a model's performance on polluted data.
     """
-    try:
-        # Validate inputs
-        if len(polluted_data) != len(names):
-            raise click.BadParameter("Number of names must match number of polluted datasets")
+    click.echo("Loading datasets...")
+    original_data = pd.read_csv(original)
+    polluted_data = pd.read_csv(polluted)
+    test_split_df = pd.read_csv(test_split)
 
-        # Create output directory
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_dir = output_dir / timestamp
-        output_dir.mkdir(parents=True, exist_ok=True)
+    click.echo("Generating test features...")
+    features = generate_test_features(original_data, polluted_data, test_split_df, mode)
 
-        # Load datasets
-        logger.info("Loading datasets...")
-        clean_df = pd.read_csv(clean_data)
-        polluted_dfs = [pd.read_csv(path) for path in polluted_data]
+    click.echo("Applying model (mocked)...")
+    predictions = mock_model_prediction(features)
 
-        logger.info(f"Analysis completed. Results saved to: {output_dir}")
-
-    except Exception as e:
-        logger.error(f"An error occurred: {str(e)}")
-        sys.exit(1)
+    click.echo("Calculating F1 Score...")
+    ground_truth = test_split_df["prediction"].values
+    f1 = f1_score(ground_truth, predictions)
+    click.echo(f"F1 Score: {f1}")
 
 
 if __name__ == "__main__":
-    main()
+    evaluate()
