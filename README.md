@@ -140,3 +140,64 @@ python polluter.py \
    - Apply the specified pollutions
    - Save the polluted dataset
    - Provide logging information about the process
+
+## Evaluator
+
+The `evaluator.py` script evaluates a model's performance on polluted data. It takes an original dataset, a polluted dataset, and a test split, then generates the corresponding feature vectors based on the specified mode. After applying the model (mocked for now), it calculates and displays the F1 score against the ground-truth data.
+
+### Usage
+
+```bash
+python evaluator.py \
+    --original /path/to/original_dataset.csv \
+    --polluted /path/to/polluted_dataset.csv \
+    --test_split /path/to/test_split.csv \
+    --model /path/to/model.pkl \
+    --mode original
+```
+
+### Parameters
+
+- `--original`: Path to the original, clean CSV dataset
+- `--polluted`: Path to the polluted CSV dataset
+- `--test_split`: Path to the CSV file containing the test split with columns `p1`, `p2`, and `prediction`
+- `--model`: Path to the model file (mocked for now, but should be replaced with actual model logic)
+- `--mode`: Mode to determine how the test features are generated (`original`, `polluted`, or `mixed`)
+
+### Mode Descriptions
+
+- `original`: Generates test features from the original dataset
+- `polluted`: Generates test features from the polluted dataset
+- `mixed`: Generates test features using one record from the original and one from the polluted dataset
+
+### Example Workflow
+
+1. Start with your clean dataset and a polluted version of it:
+
+```bash
+original_dataset.csv
+polluted_dataset.csv
+```
+
+2. Also, have your test split, which contains record pairs and the corresponding ground-truth prediction:
+
+```bash
+test_split.csv
+```
+
+3. Run the evaluator:
+
+```bash
+python evaluator.py \
+    --original original_dataset.csv \
+    --polluted polluted_dataset.csv \
+    --test_split test_split.csv \
+    --model model.pkl \
+    --mode mixed
+```
+
+4. The script will:
+   - Load the datasets and test split
+   - Generate feature vectors based on the specified mode
+   - Apply the model to generate predictions (mocked for now)
+   - Calculate the F1 score of the predictions against the ground-truth values and display the result
