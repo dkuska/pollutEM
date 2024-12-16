@@ -17,13 +17,7 @@ class XGBoostMatcher(BaseMatcher):
         Args:
             model_params: Dictionary of XGBoost parameters. If None, uses defaults.
         """
-        self.model_params = model_params or {
-            "objective": "binary:logistic",
-            "eval_metric": "logloss",
-            "max_depth": 6,
-            "learning_rate": 0.1,
-            "n_estimators": 100,
-        }
+        self.model_params = model_params or {}
         self.model = xgb.XGBClassifier(**self.model_params)
 
         # TODO: Extend this to work with other datasets!
@@ -40,28 +34,28 @@ class XGBoostMatcher(BaseMatcher):
         ]
 
     def _create_train_features(
-        self, features_df: pd.DataFrame, pairs_df: pd.DataFrame
+        self, features_df: pd.DataFrame, train_split: pd.DataFrame
     ) -> pd.DataFrame:
         """
         Create feature differences for training pairs
 
         Args:
             features_df: DataFrame containing feature data
-            pairs_df: DataFrame containing pairs to compare
+            train_split: DataFrame containing pairs to compare
 
         Returns:
             DataFrame with feature differences
         """
         # Convert IDs to int
         features_df = features_df.copy()
-        pairs_df = pairs_df.copy()
+        train_split = train_split.copy()
         features_df["id"] = features_df["id"].astype(int)
-        pairs_df["p1"] = pairs_df["p1"].astype(int)
-        pairs_df["p2"] = pairs_df["p2"].astype(int)
+        train_split["p1"] = train_split["p1"].astype(int)
+        train_split["p2"] = train_split["p2"].astype(int)
 
         # Merge features for both elements in pairs
-        p1_features = features_df.merge(pairs_df, left_on="id", right_on="p1")
-        p2_features = features_df.merge(pairs_df, left_on="id", right_on="p2")
+        p1_features = features_df.merge(train_split, left_on="id", right_on="p1")
+        p2_features = features_df.merge(train_split, left_on="id", right_on="p2")
 
         # Calculate differences
         feature_differences = {}

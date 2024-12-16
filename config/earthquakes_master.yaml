@@ -27,8 +27,8 @@ pollutions:
   - name: "ScalingShifting"
     params:
       level: "column"
-      scale: 1.1  # 10% increase
-      shift: 0.0
+      scale_amount: 1.1  # 10% increase
+      shift_amount: 0.0
     applicable_columns:
       - "depth"
       - "mag_value"
