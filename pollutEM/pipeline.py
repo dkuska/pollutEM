@@ -1,8 +1,11 @@
+import logging
 import os
+import shutil
 import subprocess
+from pathlib import Path
+
 import pandas as pd
 import click
-import logging
 
 
 # Set up logging
@@ -46,7 +49,7 @@ def apply_pollution_to_dataset(original_dataset, config_path, polluted_output):
     )
 
 
-def evaluate_model(model_path, original_dataset, polluted_dataset, test_split, mode, results_dir):
+def evaluate_model(original_dataset, polluted_dataset, train_split, test_split, mode, results_dir):
     logger.info("Evaluating model...")
     subprocess.run(
         [
@@ -56,10 +59,10 @@ def evaluate_model(model_path, original_dataset, polluted_dataset, test_split, m
             original_dataset,
             "--polluted",
             polluted_dataset,
-            "--test_split",
+            "--train-split",
+            train_split,
+            "--test-split",
             test_split,
-            "--model",
-            model_path,
             "--mode",
             mode,
             "--results-dir",
@@ -79,6 +82,29 @@ def generate_visualizations(results_dir):
     plt.close()
 
 
+def cleanup_files(config_dir: Path, polluted_datasets_dir: Path):
+    """
+    Clean up temporary files and directories created during the pipeline run.
+
+    Args:
+        config_dir: Directory containing configuration files
+        polluted_datasets_dir: Directory containing polluted datasets
+    """
+    logger.info("Starting cleanup...")
+
+    # Remove configuration directory if it exists
+    if config_dir.exists():
+        logger.info(f"Removing configuration directory: {config_dir}")
+        shutil.rmtree(config_dir)
+
+    # Remove polluted datasets directory if it exists
+    if polluted_datasets_dir.exists():
+        logger.info(f"Removing polluted datasets directory: {polluted_datasets_dir}")
+        shutil.rmtree(polluted_datasets_dir)
+
+    logger.info("Cleanup completed")
+
+
 @click.command()
 @click.option("--dataset-path", type=str, required=True, help="Path to the original dataset")
 @click.option(
@@ -93,7 +119,7 @@ def generate_visualizations(results_dir):
     default=5,
     help="Number of random combinations to generate for each combination size",
 )
-@click.option("--model-path", type=str, required=True, help="Path to the trained model")
+@click.option("--train-split-path", type=str, required=True, help="Path to the train split file")
 @click.option("--test-split-path", type=str, required=True, help="Path to the test split file")
 @click.option(
     "--results-dir",
@@ -112,30 +138,61 @@ def run_pipeline(
     master_config_path,
     config_dir,
     samples_per_size,
-    model_path,
+    train_split_path,
     test_split_path,
     results_dir,
     mode,
 ):
-    # Step 1: Generate individual configurations
-    generate_configurations(dataset_path, master_config_path, config_dir, samples_per_size)
+    try:
+        # Convert paths to Path objects for better handling
+        config_dir = Path(config_dir)
+        results_dir = Path(results_dir)
+        polluted_datasets_dir = results_dir / "datasets"
 
-    # Step 2: Apply pollution to dataset for each configuration
-    for config_file in os.listdir(config_dir):
-        if config_file.endswith(".yaml"):
-            config_path = os.path.join(config_dir, config_file)
-            polluted_output = os.path.join(
-                results_dir, f"polluted_{config_file.replace('.yaml', '.csv')}"
-            )
-            apply_pollution_to_dataset(dataset_path, config_path, polluted_output)
+        # Ensure directories exist
+        config_dir.mkdir(parents=True, exist_ok=True)
+        results_dir.mkdir(parents=True, exist_ok=True)
+        polluted_datasets_dir.mkdir(parents=True, exist_ok=True)
 
-            # Step 3: Evaluate the model on the polluted dataset
-            evaluate_model(
-                model_path, dataset_path, polluted_output, test_split_path, mode, results_dir
-            )
+        # Step 1: Generate individual configurations
+        generate_configurations(
+            dataset_path=dataset_path,
+            master_config_path=master_config_path,
+            output_dir=config_dir,
+            samples_per_size=samples_per_size,
+        )
 
-    # Step 4: Create visualizations
-    generate_visualizations(results_dir)
+        # Step 2: Apply pollution to dataset for each configuration
+        for config_file in os.listdir(config_dir):
+            if config_file.endswith(".yaml"):
+                config_path = os.path.join(config_dir, config_file)
+                polluted_output = os.path.join(
+                    results_dir, "datasets", f"polluted_{config_file.replace('.yaml', '.csv')}"
+                )
+                apply_pollution_to_dataset(
+                    original_dataset=dataset_path,
+                    config_path=config_path,
+                    polluted_output=polluted_output,
+                )
+
+                # Step 3: Evaluate the model on the polluted dataset
+                evaluate_model(
+                    original_dataset=dataset_path,
+                    polluted_dataset=polluted_output,
+                    train_split=train_split_path,
+                    test_split=test_split_path,
+                    mode=mode,
+                    results_dir=results_dir,
+                )
+
+        # Step 4: Create visualizations
+        generate_visualizations(results_dir)
+
+    except Exception as e:
+        logger.error(f"Pipeline failed: {str(e)}")
+        raise
+    finally:
+        cleanup_files(config_dir, polluted_datasets_dir)
 
 
 if __name__ == "__main__":
