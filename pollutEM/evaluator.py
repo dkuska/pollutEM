@@ -34,6 +34,12 @@ logger = logging.getLogger(__name__)
     help="Path to the training split CSV file",
 )
 @click.option(
+    "--validation-split",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to the validation split CSV file",
+)
+@click.option(
     "--test-split",
     required=True,
     type=click.Path(exists=True),
@@ -51,7 +57,9 @@ logger = logging.getLogger(__name__)
     required=True,
     help="Directory to save evaluation results and model",
 )
-def train_and_evaluate(original, polluted, train_split, test_split, mode, results_dir):
+def train_and_evaluate(
+    original, polluted, train_split, validation_split, test_split, mode, results_dir
+):
     """Train a new XGBoost matcher model and evaluate its performance."""
     results_dir = Path(results_dir)
     results_dir.mkdir(parents=True, exist_ok=True)
@@ -60,10 +68,12 @@ def train_and_evaluate(original, polluted, train_split, test_split, mode, result
     logger.info("Loading training data...")
     features_df = pd.read_csv(original)
     train_split_df = pd.read_csv(train_split)
+    validation_split_df = pd.read_csv(validation_split)
 
     logger.info("Initializing and training XGBoost matcher...")
     matcher = XGBoostMatcher()
-    matcher.train(features_df, train_split_df)
+    model, optimal_threshold = matcher.train(features_df, train_split_df, validation_split_df)
+    logger.info(f"Optimal Threshold {optimal_threshold}")
 
     # Evaluation phase
     logger.info("Loading test datasets...")
@@ -72,12 +82,11 @@ def train_and_evaluate(original, polluted, train_split, test_split, mode, result
     test_split_df = pd.read_csv(test_split)
 
     logger.info("Making predictions...")
-    predictions = matcher.predict(original_data, polluted_data, test_split_df, mode)
-    binary_predictions = (predictions >= 0.5).astype(int)
+    predictions = matcher.test(original_data, polluted_data, test_split_df)
 
     logger.info("Calculating metrics...")
     ground_truth = test_split_df["prediction"].values
-    f1 = f1_score(ground_truth, binary_predictions)
+    f1 = f1_score(ground_truth, predictions)
 
     # Store results
     result = {

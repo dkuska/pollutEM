@@ -49,7 +49,15 @@ def apply_pollution_to_dataset(original_dataset, config_path, polluted_output):
     )
 
 
-def evaluate_model(original_dataset, polluted_dataset, train_split, test_split, mode, results_dir):
+def evaluate_model(
+    original_dataset,
+    polluted_dataset,
+    train_split,
+    validation_split,
+    test_split,
+    mode,
+    results_dir,
+):
     logger.info("Evaluating model...")
     subprocess.run(
         [
@@ -61,6 +69,8 @@ def evaluate_model(original_dataset, polluted_dataset, train_split, test_split, 
             polluted_dataset,
             "--train-split",
             train_split,
+            "--validation-split",
+            validation_split,
             "--test-split",
             test_split,
             "--mode",
@@ -120,6 +130,9 @@ def cleanup_files(config_dir: Path, polluted_datasets_dir: Path):
     help="Number of random combinations to generate for each combination size",
 )
 @click.option("--train-split-path", type=str, required=True, help="Path to the train split file")
+@click.option(
+    "--validation-split-path", type=str, required=True, help="Path to the validation split file"
+)
 @click.option("--test-split-path", type=str, required=True, help="Path to the test split file")
 @click.option(
     "--results-dir",
@@ -139,6 +152,7 @@ def run_pipeline(
     config_dir,
     samples_per_size,
     train_split_path,
+    validation_split_path,
     test_split_path,
     results_dir,
     mode,
@@ -180,6 +194,7 @@ def run_pipeline(
                     original_dataset=dataset_path,
                     polluted_dataset=polluted_output,
                     train_split=train_split_path,
+                    validation_split=validation_split_path,
                     test_split=test_split_path,
                     mode=mode,
                     results_dir=results_dir,
