@@ -16,6 +16,7 @@ class ChatGPTMatcher:
             model: OpenAI model to use
             temperature: Temperature parameter for GPT responses (0.0 for most deterministic)
         """
+        self.name = "ChatGPT"
         self.api_key = api_key
         self.model = model
         self.temperature = temperature
@@ -101,21 +102,39 @@ class ChatGPTMatcher:
 
     def create_prompt(self, entity_pair: Tuple[str, str]) -> str:
         """Create a prompt for ChatGPT to determine if two entities match."""
-        return f"""Given the following two entities, determine if they represent the same entity.
+
+        system_prompt = {
+            "role": "system",
+            "content": """You are an Expert at Entity Matching and are tasked with deciding whether two records represent the same real-world entity.
+The Schemas of the Records are already aligned.
+You will be presented with records formatted like:
+Entity A is COL {Column Name} VAL {Cell Value} ... COL {Column Name} VAL {Cell Value}
+Entity B is COL {Column Name} VAL {Cell Value} ... COL {Column Name} VAL {Cell Value}
+""",
+        }
+
+        user_prompt = {
+            "role": "user",
+            "content": f"""Given the following two entities, determine if they represent the same entity.
 Reply with a single word: either 'match' or 'non-match'.
 
 {entity_pair[0]}
 {entity_pair[1]}
 
-Answer:"""
+Answer:""",
+        }
 
-    def query_chatgpt(self, prompt: str, max_retries: int = 3, retry_delay: float = 1.0) -> str:
+        return [system_prompt, user_prompt]
+
+    def query_chatgpt(
+        self, messages: list[dict[str, str]], max_retries: int = 3, retry_delay: float = 1.0
+    ) -> str:
         """Query ChatGPT with retry logic for API rate limits."""
         for attempt in range(max_retries):
             try:
                 response = self.client.chat.completions.create(
                     model=self.model,
-                    messages=[{"role": "user", "content": prompt}],
+                    messages=messages,
                     temperature=self.temperature,
                 )
                 response_text = response.choices[0].message.content.strip().lower()
@@ -151,26 +170,21 @@ Answer:"""
             original_features, polluted_features, test_split, mode="test"
         )
 
-        scores = []
+        predictions = []
 
         for pair in tqdm(
             formatted_pairs,
             desc="Processing entity pairs",
         ):
-            prompt = self.create_prompt(pair)
-            response = self.query_chatgpt(prompt)
+            messages = self.create_prompt(pair)
+            response = self.query_chatgpt(messages)
 
             # Convert ChatGPT's response to a confidence score
             if response == "match":
-                scores.append(1.0)
+                predictions.append(1)
             elif response == "non-match":
-                scores.append(0.0)
+                predictions.append(0)
             else:
                 print(f"Error for sample {pair} and resp {response}")
 
-        # Format results similar to the test function
-        result = pd.DataFrame({"score": scores})
-        result["prediction"] = 0
-        result.loc[result["score"] > threshold, "prediction"] = 1
-
-        return result
+        return predictions

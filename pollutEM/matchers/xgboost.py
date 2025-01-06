@@ -22,6 +22,7 @@ class XGBoostMatcher:
         Args:
             model_params: Dictionary of XGBoost parameters. If None, uses defaults.
         """
+        self.name = "XGBoost"
         self.model_params = model_params or {}
         self.model = model or None
         self.numeric_columns = numeric_columns or None

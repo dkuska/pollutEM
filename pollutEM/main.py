@@ -8,6 +8,7 @@ import click
 from dotenv import load_dotenv
 from sklearn.metrics import f1_score
 import pandas as pd
+from tqdm import tqdm
 
 from utils.config import load_config
 from utils.visualization import generate_visualizations
@@ -92,6 +93,7 @@ def main(
         train_split_df = pd.read_csv(train_split)
         validation_split_df = pd.read_csv(validation_split)
         test_split_df = pd.read_csv(test_split)
+        test_split_df = test_split_df.sample(n=50)  # TODO: REMOVE THIS!!!
 
         # Validate data is not empty
         for df, name in [
@@ -132,7 +134,9 @@ def main(
     )
 
     for matcher in matchers:
-        for pollution_config in all_configs:
+        for pollution_config in tqdm(
+            all_configs, desc=f"Processing Configuration with Matcher {matcher.name}"
+        ):
             try:
                 name = pollution_config["pollutions"][0]["name"]
                 polluted_dataset = apply_pollutions(dataset, pollution_config)
@@ -146,7 +150,7 @@ def main(
                 f1 = f1_score(ground_truth, predictions)
 
                 result = {
-                    "matcher": str(type(matcher)),
+                    "matcher": matcher.name,
                     "pollution_type": name,
                     "number_of_columns": len(
                         pollution_config["pollutions"][0]["params"]["indices"]
@@ -168,7 +172,7 @@ def main(
     try:
         generate_visualizations(evaluation_results_df, output_path)
     except Exception as e:
-        logger.error(f"Error generating visualizations: {str(e)}")
+        logger.error(f"Error generating visualizations: {e}")
 
 
 if __name__ == "__main__":
