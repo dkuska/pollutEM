@@ -2,8 +2,10 @@ from datetime import datetime
 import logging
 from pathlib import Path
 import sys
+import os
 
 import click
+from dotenv import load_dotenv
 from sklearn.metrics import f1_score
 import pandas as pd
 
@@ -13,7 +15,11 @@ from polluters import apply_pollutions, PollutionConfigGenerator
 from matchers import ChatGPTMatcher, XGBoostMatcher
 
 
+load_dotenv()  # take environment variables
+
 # Set up logging
+logging.getLogger("openai").disabled = True
+logging.getLogger("httpx").disabled = True
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - MAIN - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -104,14 +110,17 @@ def main(
     dataset_columns = list(dataset.columns)
 
     # Initialize Model
-    matcher = XGBoostMatcher()
     if model_path.exists():
         logger.info(f"Loading existing model from {model_path}")
-        matcher = XGBoostMatcher.load_model(model_path)
+        xgboost_matcher = XGBoostMatcher.load_model(model_path)
     else:
         logger.info("Training new model...")
-        model = matcher.train(dataset, train_split_df, validation_split_df)
-        matcher.save_model(model, model_path)
+        xgboost_matcher = XGBoostMatcher()
+        model = xgboost_matcher.train(dataset, train_split_df, validation_split_df)
+        xgboost_matcher.save_model(model, model_path)
+
+    chatgpt_matcher = ChatGPTMatcher(api_key=os.environ.get("API_KEY"))
+    matchers = [xgboost_matcher, chatgpt_matcher]
 
     # Generate configurations and evaluate
     evaluation_results = []
@@ -122,28 +131,32 @@ def main(
         )
     )
 
-    for pollution_config in all_configs:
-        try:
-            name = pollution_config["pollutions"][0]["name"]
-            polluted_dataset = apply_pollutions(dataset, pollution_config)
-            if polluted_dataset.empty:
-                logger.warning(f"Pollution {name} resulted in empty dataset - skipping")
+    for matcher in matchers:
+        for pollution_config in all_configs:
+            try:
+                name = pollution_config["pollutions"][0]["name"]
+                polluted_dataset = apply_pollutions(dataset, pollution_config)
+                if polluted_dataset.empty:
+                    logger.warning(f"Pollution {name} resulted in empty dataset - skipping")
+                    continue
+
+                predictions = matcher.test(dataset, polluted_dataset, test_split_df)
+
+                ground_truth = test_split_df["prediction"].values
+                f1 = f1_score(ground_truth, predictions)
+
+                result = {
+                    "matcher": str(type(matcher)),
+                    "pollution_type": name,
+                    "number_of_columns": len(
+                        pollution_config["pollutions"][0]["params"]["indices"]
+                    ),
+                    "f1_score": f1,
+                }
+                evaluation_results.append(result)
+            except Exception as e:
+                logger.error(f"Error processing pollution {name}: {str(e)}")
                 continue
-
-            predictions = matcher.test(dataset, polluted_dataset, test_split_df)
-
-            ground_truth = test_split_df["prediction"].values
-            f1 = f1_score(ground_truth, predictions)
-
-            result = {
-                "pollution_type": name,
-                "number_of_columns": len(pollution_config["pollutions"][0]["params"]["indices"]),
-                "f1_score": f1,
-            }
-            evaluation_results.append(result)
-        except Exception as e:
-            logger.error(f"Error processing pollution {name}: {str(e)}")
-            continue
 
     if not evaluation_results:
         logger.error("No evaluation results were generated")

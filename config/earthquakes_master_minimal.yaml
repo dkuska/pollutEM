@@ -1,0 +1,12 @@
+pollutions:
+  # Rounding for precision-sensitive measurements
+  - name: "Rounding"
+    params:
+      level: "column"
+      decimal_places: 1
+    applicable_columns:
+      - "depth"
+      - "standard_error"
+      - "minimum_distance"
+      - "mag_value"
+      - "mag_uncertainty"

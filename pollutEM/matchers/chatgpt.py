@@ -1,9 +1,9 @@
 import time
-from typing import List, Tuple, Set, Optional
+from typing import Tuple, Set, Optional
 
 import pandas as pd
-import numpy as np
-import openai
+from openai import OpenAI
+from tqdm import tqdm
 
 
 class ChatGPTMatcher:
@@ -20,11 +20,21 @@ class ChatGPTMatcher:
         self.model = model
         self.temperature = temperature
         self.numeric_columns: Optional[Set[str]] = None
-        openai.api_key = api_key
+        self.client = OpenAI(api_key=api_key)
 
-    def get_numeric_columns(self, data: pd.DataFrame) -> Set[str]:
-        """Get columns with numeric data."""
-        return set(data.select_dtypes(include=[np.number]).columns)
+    @staticmethod
+    def get_numeric_columns(df: pd.DataFrame) -> list[str]:
+        """Get numeric columns following original implementation."""
+        numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
+        cols = list(df.select_dtypes(include=numerics).columns)
+        if "id" not in cols:
+            cols.append("id")
+
+        # Return None if only ID column exists
+        if len(cols) == 1 and cols[0] == "id":
+            return None
+
+        return cols
 
     def calculate_features(
         self, data1: pd.DataFrame, data2: pd.DataFrame, pairs_df: pd.DataFrame, mode: str = "train"
@@ -54,7 +64,7 @@ class ChatGPTMatcher:
 
         # Get numeric columns if not already set
         if self.numeric_columns is None:
-            self.numeric_columns = set(self.get_numeric_columns(data1))
+            self.numeric_columns = set(ChatGPTMatcher.get_numeric_columns(data1))
 
         # Create left and right dataframes
         if mode == "train":
@@ -103,18 +113,13 @@ Answer:"""
         """Query ChatGPT with retry logic for API rate limits."""
         for attempt in range(max_retries):
             try:
-                response = openai.ChatCompletion.create(
+                response = self.client.chat.completions.create(
                     model=self.model,
                     messages=[{"role": "user", "content": prompt}],
                     temperature=self.temperature,
                 )
-                return response.choices[0].message.content.strip().lower()
-            except openai.error.RateLimitError:
-                if attempt < max_retries - 1:
-                    time.sleep(retry_delay)
-                    retry_delay *= 2  # Exponential backoff
-                else:
-                    raise
+                response_text = response.choices[0].message.content.strip().lower()
+                return response_text
             except Exception as e:
                 print(f"Error querying ChatGPT: {str(e)}")
                 if attempt < max_retries - 1:
@@ -124,10 +129,11 @@ Answer:"""
 
     def test(
         self,
-        data1: pd.DataFrame,
-        data2: pd.DataFrame,
+        original_features: pd.DataFrame,
+        polluted_features: pd.DataFrame,
         test_split: pd.DataFrame,
-    ) -> List[bool]:
+        threshold: float = 0.5,
+    ) -> pd.DataFrame:
         """
         Perform entity matching using ChatGPT.
 
@@ -141,12 +147,30 @@ Answer:"""
         Returns:
             List of boolean values indicating matches
         """
-        formatted_pairs = self.calculate_features(data1, data2, test_split, mode="test")
-        matches = []
+        formatted_pairs = self.calculate_features(
+            original_features, polluted_features, test_split, mode="test"
+        )
 
-        for i, pair in enumerate(formatted_pairs):
+        scores = []
+
+        for pair in tqdm(
+            formatted_pairs,
+            desc="Processing entity pairs",
+        ):
             prompt = self.create_prompt(pair)
             response = self.query_chatgpt(prompt)
-            matches.append(response == "match")
 
-        return matches
+            # Convert ChatGPT's response to a confidence score
+            if response == "match":
+                scores.append(1.0)
+            elif response == "non-match":
+                scores.append(0.0)
+            else:
+                print(f"Error for sample {pair} and resp {response}")
+
+        # Format results similar to the test function
+        result = pd.DataFrame({"score": scores})
+        result["prediction"] = 0
+        result.loc[result["score"] > threshold, "prediction"] = 1
+
+        return result

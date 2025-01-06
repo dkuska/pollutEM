@@ -148,7 +148,7 @@ class XGBoostMatcher:
         original_features: pd.DataFrame,
         polluted_features: pd.DataFrame,
         test_split: pd.DataFrame,
-    ):
+    ) -> pd.DataFrame:
         test_features = self.calculate_features(
             original_features,
             polluted_features,

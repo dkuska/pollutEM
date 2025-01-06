@@ -4,6 +4,7 @@ isort
 loguru
 matplotlib
 numpy
+openai
 pandas
 pip
 pre-commit
