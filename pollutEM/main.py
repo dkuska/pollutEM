@@ -1,7 +1,6 @@
-import click
 import yaml
+from datetime import datetime
 import os
-import pandas as pd
 import random
 from itertools import combinations
 from pathlib import Path
@@ -9,8 +8,10 @@ from typing import List, Dict, Any
 import logging
 import sys
 
+import click
 import matplotlib.pyplot as plt
 from sklearn.metrics import f1_score
+import pandas as pd
 
 from polluters import get_polluter
 from matchers.xgboost import XGBoostMatcher
@@ -181,8 +182,12 @@ def main(
     output_dir: str,
     samples_per_size: int,
 ):
-    # Create output directory
-    output_path = Path(output_dir)
+    # Create base output directory
+    base_output_path = Path(output_dir)
+    base_output_path.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_path = base_output_path / f"run_{timestamp}"
     output_path.mkdir(parents=True, exist_ok=True)
     model_path = output_path / "model.pkl"
 
@@ -257,8 +262,10 @@ def main(
         sys.exit(1)
 
     evaluation_results_df = pd.DataFrame(evaluation_results)
+    evaluation_df_path = output_path / "results.csv"
+    evaluation_results_df.to_csv(evaluation_df_path, index=False)
     try:
-        generate_visualizations(evaluation_results_df, output_dir)
+        generate_visualizations(evaluation_results_df, output_path)
     except Exception as e:
         logger.error(f"Error generating visualizations: {str(e)}")
 
