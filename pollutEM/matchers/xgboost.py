@@ -1,4 +1,6 @@
-from typing import Optional
+from typing import Optional, Union
+import pickle
+from pathlib import Path
 
 from sklearn.metrics import f1_score, roc_curve
 import pandas as pd
@@ -7,7 +9,13 @@ import xgboost as xgb
 
 
 class XGBoostMatcher:
-    def __init__(self, model_params: Optional[dict] = None):
+    def __init__(
+        self,
+        model_params: Optional[dict] = None,
+        model: Optional[xgb.Booster] = None,
+        numeric_columns: Optional[list[str]] = None,
+        optimal_threshold: Optional[float] = None,
+    ):
         """
         Initialize XGBoost matcher with optional model parameters
 
@@ -15,8 +23,9 @@ class XGBoostMatcher:
             model_params: Dictionary of XGBoost parameters. If None, uses defaults.
         """
         self.model_params = model_params or {}
-        self.model = None
-        self.numeric_columns = None
+        self.model = model or None
+        self.numeric_columns = numeric_columns or None
+        self.optimal_threshold = optimal_threshold or None
 
     @staticmethod
     def get_numeric_columns(df: pd.DataFrame) -> list[str]:
@@ -88,7 +97,7 @@ class XGBoostMatcher:
 
         # Calculate differences using the original implementation's style
         final_df = pd.DataFrame()
-        for col in filter(lambda x: x.startswith("left"), combined_features.columns):
+        for col in filter(lambda x: x.startswith("left_"), combined_features.columns):
             base_col = col[5:]  # Remove 'left_' prefix
             final_df[base_col] = combined_features[col] - combined_features[f"right_{base_col}"]
 
@@ -156,3 +165,46 @@ class XGBoostMatcher:
         result.loc[result["score"] > self.optimal_threshold, "prediction"] = 1
 
         return result["prediction"].values
+
+    def save_model(self, model: xgb.Booster, path: Union[str, Path]) -> None:
+        """
+        Save model and associated state to disk using pickle.
+
+        Args:
+            model: Trained XGBoost model
+            path: Path where to save the model
+        """
+        path = Path(path)
+        save_dict = {
+            "model": model,
+            "numeric_columns": self.numeric_columns,
+            "model_params": self.model_params,
+            "optimal_threshold": self.optimal_threshold,
+        }
+        with open(path, "wb") as f:
+            pickle.dump(save_dict, f)
+
+    @classmethod
+    def load_model(cls, path: Union[str, Path]) -> tuple["XGBoostMatcher", xgb.Booster]:
+        """
+        Load model and associated state from disk using pickle.
+
+        Args:
+            path: Path to the saved model
+
+        Returns:
+            Tuple of (XGBoostMatchingSolution instance, loaded XGBoost model)
+        """
+        path = Path(path)
+        with open(path, "rb") as f:
+            save_dict = pickle.load(f)
+
+        # Create new instance with saved paths
+        instance = cls(
+            model_params=save_dict["model_params"],
+            model=save_dict["model"],
+            numeric_columns=save_dict["numeric_columns"],
+            optimal_threshold=save_dict["optimal_threshold"],
+        )
+
+        return instance
