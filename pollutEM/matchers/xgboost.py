@@ -141,7 +141,7 @@ class XGBoostMatcher:
         )
         self.optimal_threshold = thresholds[optimal_idx]
 
-        return self.model, self.optimal_threshold
+        return self.model
 
     def test(
         self,
