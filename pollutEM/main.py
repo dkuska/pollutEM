@@ -10,7 +10,7 @@ import pandas as pd
 from utils.config import load_config
 from utils.visualization import generate_visualizations
 from polluters import apply_pollutions, PollutionConfigGenerator
-from matchers.xgboost import XGBoostMatcher
+from matchers import ChatGPTMatcher, XGBoostMatcher
 
 
 # Set up logging
