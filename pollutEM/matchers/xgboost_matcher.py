@@ -62,7 +62,6 @@ class XGBoostMatcher:
         if "id" not in data1.columns or "id" not in data2.columns:
             raise KeyError("Both datasets must contain an 'id' column")
 
-        # Ensure IDs are integers
         data1 = data1.copy()
         data2 = data2.copy()
         pairs_df = pairs_df.copy()

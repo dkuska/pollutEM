@@ -107,4 +107,3 @@ dependencies:
       - urllib3==1.26.16
       - wandb==0.15.3
       - wasabi==0.10.1
-prefix: /hpi/fs00/home/lukas.laskowski/conda3/envs/ditto
