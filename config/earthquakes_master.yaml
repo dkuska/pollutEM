@@ -3,18 +3,24 @@ pollutions:
   - name: "GaussianNoise"
     params:
       level: "column"
-      mean: 1.0
-      std_dev: 0.05  # 5% variation
+      mean: 3.0
+      std_dev: 1.0  # 5% variation
     applicable_columns:
       - "depth"
       - "depth_uncertainty"
       - "horizontal_uncertainty"
+      - "used_phase_count"
+      - "used_station_count"
+      - "standard_error"
+      - "azimuthal_gap"
+      - "minimum_distance"
+      - "mag_value"
 
   # Rounding for precision-sensitive measurements
   - name: "Rounding"
     params:
       level: "column"
-      decimal_places: 2
+      decimal_places: 1
     applicable_columns:
       - "depth"
       - "standard_error"
@@ -32,6 +38,10 @@ pollutions:
     applicable_columns:
       - "depth"
       - "mag_value"
+      - "depth_uncertainty"
+      - "horizontal_uncertainty"
+      - "azimuthal_gap"
+      - "standard_error"
 
   # MissingValue pollution
   - name: "MissingValue"
