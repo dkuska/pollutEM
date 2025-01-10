@@ -93,7 +93,7 @@ def main(
         train_split_df = pd.read_csv(train_split)
         validation_split_df = pd.read_csv(validation_split)
         test_split_df = pd.read_csv(test_split)
-        test_split_df = test_split_df.sample(n=50)  # TODO: REMOVE THIS!!!
+        # test_split_df = test_split_df.sample(n=50)  # TODO: REMOVE THIS!!!
 
         # Validate data is not empty
         for df, name in [
@@ -134,6 +134,20 @@ def main(
     )
 
     for matcher in matchers:
+        # Generate Baseline without Data Pollution
+        predictions = matcher.test(dataset, dataset, test_split_df)
+        ground_truth = test_split_df["prediction"].values
+        f1 = f1_score(ground_truth, predictions)
+
+        evaluation_results.append(
+            {
+                "matcher": matcher.name,
+                "pollution_type": "None",
+                "number_of_columns": 0,
+                "f1_score": f1,
+            }
+        )
+
         for pollution_config in tqdm(
             all_configs, desc=f"Processing Configuration with Matcher {matcher.name}"
         ):
