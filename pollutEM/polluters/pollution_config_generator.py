@@ -85,6 +85,11 @@ class PollutionConfigGenerator:
         Yields:
             Configuration dictionaries
         """
+
+        logger.info(f"Generating configurations for {name}")
+        param_str = ", ".join(f"{k}={v}" for k, v in template["params"].items() if k != "level")
+        logger.info(f"  With parameters: {param_str}")
+
         applicable_columns = [col for col in template["applicable_columns"] if col in all_columns]
 
         if not applicable_columns:
