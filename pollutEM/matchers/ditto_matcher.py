@@ -1,8 +1,9 @@
-import pandas as pd
 from dataclasses import dataclass
 
-from .ditto.ditto_light.dataset import DittoDataset
-from .ditto.ditto_light.ditto import train as ditto_train
+import pandas as pd
+
+from .ditto_light.dataset import DittoDataset
+from .ditto_light.ditto import train as ditto_train
 
 
 @dataclass
