@@ -16,7 +16,7 @@ from polluters import apply_pollutions, PollutionConfigGenerator
 from matchers import ChatGPTMatcher, XGBoostMatcher
 
 
-load_dotenv()  # take environment variables
+load_dotenv()
 
 # Set up logging
 logging.getLogger("openai").disabled = True
@@ -78,22 +78,23 @@ def main(
     base_output_path = Path(output_dir)
     base_output_path.mkdir(parents=True, exist_ok=True)
 
+    # Create sub-directory where results of this run are saved
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_path = base_output_path / f"run_{timestamp}"
     output_path.mkdir(parents=True, exist_ok=True)
     model_path = output_path / "model.pkl"
+    logger.info(f"Saving run results to {output_path}")
 
     # Load master configuration and extract templates
     master_config = load_config(master_config_path)
     config_generator = PollutionConfigGenerator(master_config)
 
-    # Load all data
+    # Load and validate all data
     try:
         dataset = pd.read_csv(dataset_path)
         train_split_df = pd.read_csv(train_split)
         validation_split_df = pd.read_csv(validation_split)
         test_split_df = pd.read_csv(test_split)
-        # test_split_df = test_split_df.sample(n=50)  # TODO: REMOVE THIS!!!
 
         # Validate data is not empty
         for df, name in [
@@ -109,9 +110,8 @@ def main(
         logger.error(f"Error loading data: {str(e)}")
         sys.exit(1)
 
-    dataset_columns = list(dataset.columns)
-
-    # Initialize Model
+    # Initialize Models and Matchers
+    # TODO: Make Matchers configurable!
     if model_path.exists():
         logger.info(f"Loading existing model from {model_path}")
         xgboost_matcher = XGBoostMatcher.load_model(model_path)
@@ -124,15 +124,16 @@ def main(
     chatgpt_matcher = ChatGPTMatcher(api_key=os.environ.get("API_KEY"))
     matchers = [xgboost_matcher, chatgpt_matcher]
 
-    # Generate configurations and evaluate
-    evaluation_results = []
-
+    # Generate configurations
+    dataset_columns = list(dataset.columns)
     all_configs = list(
         config_generator.get_all_configs(
             all_columns=dataset_columns, samples_per_size=samples_per_size
         )
     )
 
+    # Evaluate all Matchers for all Configurations
+    evaluation_results = []
     for matcher in matchers:
         # Generate Baseline without Data Pollution
         predictions = matcher.test(dataset, dataset, test_split_df)
@@ -180,9 +181,10 @@ def main(
         logger.error("No evaluation results were generated")
         sys.exit(1)
 
+    # Save evaluation data and generate Visualization
     evaluation_results_df = pd.DataFrame(evaluation_results)
-    evaluation_df_path = output_path / "results.csv"
-    evaluation_results_df.to_csv(evaluation_df_path, index=False)
+    evaluation_csv_path = output_path / "results.csv"
+    evaluation_results_df.to_csv(evaluation_csv_path, index=False)
     try:
         generate_visualizations(evaluation_results_df, output_path)
     except Exception as e:
