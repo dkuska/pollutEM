@@ -1,10 +1,9 @@
 pollutions:
-  # Gaussian Noise for depth measurements
   - name: "GaussianNoise"
     params:
       level: "column"
-      mean: 3.0
-      std_dev: 1.0  # 5% variation
+      mean: 1.0
+      std_dev: 1.0
     applicable_columns:
       - "depth"
       - "depth_uncertainty"
@@ -15,43 +14,117 @@ pollutions:
       - "azimuthal_gap"
       - "minimum_distance"
       - "mag_value"
+      - "mag_uncertainty"
+      - "mag_type"
+      - "mag_station_count"
 
-  # Rounding for precision-sensitive measurements
+  - name: "GaussianNoise"
+    params:
+      level: "column"
+      mean: 100.0
+      std_dev: 10.0
+    applicable_columns:
+      - "depth"
+      - "depth_uncertainty"
+      - "horizontal_uncertainty"
+      - "used_phase_count"
+      - "used_station_count"
+      - "standard_error"
+      - "azimuthal_gap"
+      - "minimum_distance"
+      - "mag_value"
+      - "mag_uncertainty"
+      - "mag_type"
+      - "mag_station_count"
+
   - name: "Rounding"
     params:
       level: "column"
       decimal_places: 1
     applicable_columns:
       - "depth"
+      - "depth_uncertainty"
+      - "horizontal_uncertainty"
+      - "used_phase_count"
+      - "used_station_count"
       - "standard_error"
       - "azimuthal_gap"
       - "minimum_distance"
       - "mag_value"
       - "mag_uncertainty"
+      - "mag_type"
+      - "mag_station_count"
 
-  # Scaling for depth and magnitude values
+  - name: "Rounding"
+    params:
+      level: "column"
+      decimal_places: -1
+    applicable_columns:
+      - "depth"
+      - "depth_uncertainty"
+      - "horizontal_uncertainty"
+      - "used_phase_count"
+      - "used_station_count"
+      - "standard_error"
+      - "azimuthal_gap"
+      - "minimum_distance"
+      - "mag_value"
+      - "mag_uncertainty"
+      - "mag_type"
+      - "mag_station_count"
+
   - name: "ScalingShifting"
     params:
       level: "column"
-      scale_amount: 1.1  # 10% increase
+      scale_amount: 2.54
       shift_amount: 0.0
     applicable_columns:
       - "depth"
-      - "mag_value"
       - "depth_uncertainty"
       - "horizontal_uncertainty"
-      - "azimuthal_gap"
+      - "used_phase_count"
+      - "used_station_count"
       - "standard_error"
+      - "azimuthal_gap"
+      - "minimum_distance"
+      - "mag_value"
+      - "mag_uncertainty"
+      - "mag_type"
+      - "mag_station_count"
 
-  # MissingValue pollution
+  - name: "ScalingShifting"
+    params:
+      level: "column"
+      scale_amount: 1.8
+      shift_amount: 32.0
+    applicable_columns:
+      - "depth"
+      - "depth_uncertainty"
+      - "horizontal_uncertainty"
+      - "used_phase_count"
+      - "used_station_count"
+      - "standard_error"
+      - "azimuthal_gap"
+      - "minimum_distance"
+      - "mag_value"
+      - "mag_uncertainty"
+      - "mag_type"
+      - "mag_station_count"
+
   - name: "MissingValue"
     params:
       level: "column"
-      missing_ratio: 0.1  # 10% chance of being missing
+      missing_ratio: 1.0
     applicable_columns:
+      - "depth"
       - "depth_uncertainty"
       - "horizontal_uncertainty"
+      - "used_phase_count"
+      - "used_station_count"
       - "standard_error"
+      - "azimuthal_gap"
+      - "minimum_distance"
+      - "mag_value"
       - "mag_uncertainty"
       - "mag_type"
       - "mag_station_count"
