@@ -15,6 +15,7 @@ class XGBoostMatcher:
         model: Optional[xgb.Booster] = None,
         numeric_columns: Optional[list[str]] = None,
         optimal_threshold: Optional[float] = None,
+        seed: Optional[int] = None,
     ):
         """
         Initialize XGBoost matcher with optional model parameters
@@ -23,7 +24,7 @@ class XGBoostMatcher:
             model_params: Dictionary of XGBoost parameters. If None, uses defaults.
         """
         self.name = "XGBoost"
-        self.model_params = model_params or {}
+        self.model_params = model_params or {"random_state": seed, "seed": seed}
         self.model = model or None
         self.numeric_columns = numeric_columns or None
         self.optimal_threshold = optimal_threshold or None

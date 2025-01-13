@@ -11,6 +11,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from utils.config import load_config
+from utils.random import set_seed
 from utils.visualization import generate_visualizations
 from polluters import apply_pollutions, PollutionConfigGenerator
 from matchers import ChatGPTMatcher, XGBoostMatcher
@@ -65,6 +66,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--samples_per_size", type=int, default=5, help="Number of random samples per combination size"
 )
+@click.option("--seed", type=int, default=42, help="Seed to use for RNG")
 def main(
     dataset_path: str,
     master_config_path: str,
@@ -73,7 +75,11 @@ def main(
     test_split: str,
     output_dir: str,
     samples_per_size: int,
+    seed: int,
 ):
+    # Set seed for reproducability
+    set_seed(seed)
+
     # Create base output directory
     base_output_path = Path(output_dir)
     base_output_path.mkdir(parents=True, exist_ok=True)
