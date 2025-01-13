@@ -40,7 +40,7 @@ class PollutionConfigGenerator:
         Returns:
             dictionary of pollution templates
         """
-        templates = {}
+        templates = []
         for pollution in master_config["pollutions"]:
             name = pollution["name"]
             params = pollution["params"].copy()
@@ -48,10 +48,13 @@ class PollutionConfigGenerator:
             params.pop("probability", None)
             params["level"] = "column"
 
-            templates[name] = {
-                "params": params,
-                "applicable_columns": pollution.get("applicable_columns", []),
-            }
+            templates.append(
+                {
+                    "name": name,
+                    "params": params,
+                    "applicable_columns": pollution.get("applicable_columns", []),
+                }
+            )
         return templates
 
     def create_config(self, name: str, params: dict, columns: List[str]) -> dict[str, Any]:
@@ -71,13 +74,12 @@ class PollutionConfigGenerator:
         return {"pollutions": [config]}
 
     def generate_configs(
-        self, name: str, template: dict, all_columns: List[str], samples_per_size: int = 5
+        self, template: dict, all_columns: List[str], samples_per_size: int = 5
     ) -> Generator[dict[str, Any], None, None]:
         """
         Generate configuration samples for different column combinations.
 
         Args:
-            name: Name of the pollution type
             template: Template containing parameters and applicable columns
             all_columns: List of all available columns
             samples_per_size: Number of random samples to generate per combination size
@@ -86,14 +88,14 @@ class PollutionConfigGenerator:
             Configuration dictionaries
         """
 
-        logger.info(f"Generating configurations for {name}")
+        logger.info(f"Generating configurations for {template['name']}")
         param_str = ", ".join(f"{k}={v}" for k, v in template["params"].items() if k != "level")
         logger.info(f"  With parameters: {param_str}")
 
         applicable_columns = [col for col in template["applicable_columns"] if col in all_columns]
 
         if not applicable_columns:
-            logger.info(f"Warning: No applicable columns found for {name}")
+            logger.info(f"Warning: No applicable columns found for {template['name']}")
             return
 
         logger.info(f"  Applicable columns: {', '.join(applicable_columns)}")
@@ -105,7 +107,7 @@ class PollutionConfigGenerator:
             if n_samples > 0:
                 selected = random.sample(all_combinations, n_samples)
                 for cols in selected:
-                    yield self.create_config(name, template["params"], list(cols))
+                    yield self.create_config(template["name"], template["params"], list(cols))
 
     def get_all_configs(
         self, all_columns: List[str], samples_per_size: int = 5
@@ -123,5 +125,5 @@ class PollutionConfigGenerator:
         if not self.templates:
             raise ValueError("No templates available. Set master_config first.")
 
-        for name, template in self.templates.items():
-            yield from self.generate_configs(name, template, all_columns, samples_per_size)
+        for template in self.templates:
+            yield from self.generate_configs(template, all_columns, samples_per_size)

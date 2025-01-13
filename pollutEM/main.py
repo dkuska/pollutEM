@@ -145,6 +145,7 @@ def main(
                 "matcher": matcher.name,
                 "pollution_type": "None",
                 "number_of_columns": 0,
+                "params": "",
                 "f1_score": f1,
             }
         )
@@ -153,10 +154,21 @@ def main(
             all_configs, desc=f"Processing Configuration with Matcher {matcher.name}"
         ):
             try:
-                name = pollution_config["pollutions"][0]["name"]
+                pollution_name = pollution_config["pollutions"][0]["name"]
+                number_of_columns = len(pollution_config["pollutions"][0]["params"]["indices"])
+                keys_to_exclude = ["indices", "level"]
+                pollution_params = {
+                    k: v
+                    for k, v in pollution_config["pollutions"][0]["params"].items()
+                    if k not in keys_to_exclude
+                }
+                pollution_param_string = str(pollution_params)
+
                 polluted_dataset = apply_pollutions(dataset, pollution_config)
                 if polluted_dataset.empty:
-                    logger.warning(f"Pollution {name} resulted in empty dataset - skipping")
+                    logger.warning(
+                        f"Pollution {pollution_name} resulted in empty dataset - skipping"
+                    )
                     continue
 
                 predictions = matcher.test(dataset, polluted_dataset, test_split_df)
@@ -166,15 +178,14 @@ def main(
 
                 result = {
                     "matcher": matcher.name,
-                    "pollution_type": name,
-                    "number_of_columns": len(
-                        pollution_config["pollutions"][0]["params"]["indices"]
-                    ),
+                    "pollution_type": pollution_name,
+                    "number_of_columns": number_of_columns,
+                    "params": pollution_param_string,
                     "f1_score": f1,
                 }
                 evaluation_results.append(result)
             except Exception as e:
-                logger.error(f"Error processing pollution {name}: {str(e)}")
+                logger.error(f"Error processing pollution {pollution_name}: {str(e)}")
                 continue
 
     if not evaluation_results:
