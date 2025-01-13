@@ -6,7 +6,7 @@ import os
 
 import click
 from dotenv import load_dotenv
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, recall_score, precision_score
 import pandas as pd
 from tqdm import tqdm
 
@@ -122,7 +122,7 @@ def main(
         xgboost_matcher.save_model(model, model_path)
 
     chatgpt_matcher = ChatGPTMatcher(api_key=os.environ.get("API_KEY"))
-    matchers = [xgboost_matcher, chatgpt_matcher]
+    matchers = [xgboost_matcher]  # , chatgpt_matcher]
 
     # Generate configurations
     dataset_columns = list(dataset.columns)
@@ -139,6 +139,8 @@ def main(
         predictions = matcher.test(dataset, dataset, test_split_df)
         ground_truth = test_split_df["prediction"].values
         f1 = f1_score(ground_truth, predictions)
+        precision = precision_score(ground_truth, predictions)
+        recall = recall_score(ground_truth, predictions)
 
         evaluation_results.append(
             {
@@ -147,6 +149,8 @@ def main(
                 "number_of_columns": 0,
                 "params": "",
                 "f1_score": f1,
+                "precision": precision,
+                "recall": recall,
             }
         )
 
@@ -175,6 +179,8 @@ def main(
 
                 ground_truth = test_split_df["prediction"].values
                 f1 = f1_score(ground_truth, predictions)
+                precision = precision_score(ground_truth, predictions)
+                recall = recall_score(ground_truth, predictions)
 
                 result = {
                     "matcher": matcher.name,
@@ -182,6 +188,8 @@ def main(
                     "number_of_columns": number_of_columns,
                     "params": pollution_param_string,
                     "f1_score": f1,
+                    "precision": precision,
+                    "recall": recall,
                 }
                 evaluation_results.append(result)
             except Exception as e:
@@ -193,11 +201,13 @@ def main(
         sys.exit(1)
 
     # Save evaluation data and generate Visualization
-    evaluation_results_df = pd.DataFrame(evaluation_results)
+    metrics_df = pd.DataFrame(evaluation_results)
     evaluation_csv_path = output_path / "results.csv"
-    evaluation_results_df.to_csv(evaluation_csv_path, index=False)
+    metrics_df.to_csv(evaluation_csv_path, index=False)
     try:
-        generate_visualizations(evaluation_results_df, output_path)
+        generate_visualizations(metrics_df, output_dir=output_path, metric="precision")
+        generate_visualizations(metrics_df, output_dir=output_path, metric="recall")
+        generate_visualizations(metrics_df, output_dir=output_path, metric="f1_score")
     except Exception as e:
         logger.error(f"Error generating visualizations: {e}")
 

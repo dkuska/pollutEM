@@ -1,0 +1,123 @@
+pollutions:
+  # Gaussian Noise for depth measurements
+  - name: "GaussianNoise"
+    params:
+      level: "column"
+      mean: 1.0
+      std_dev: 10.0  # 5% variation
+    applicable_columns:
+      - "weight_lb"
+      - "weight_oz"
+      - "weight_kg"
+      - "weight_g"
+      - "brand_refine"
+      - "cpu_brand_refine"
+      - "core_refine"
+      - "frequency_refine"
+      - "storage_refine"
+      - "ram_refine"
+
+  - name: "GaussianNoise"
+    params:
+      level: "column"
+      mean: 3.0
+      std_dev: 1.0  # 5% variation
+    applicable_columns:
+      - "weight_lb"
+      - "weight_oz"
+      - "weight_kg"
+      - "weight_g"
+      - "brand_refine"
+      - "cpu_brand_refine"
+      - "core_refine"
+      - "frequency_refine"
+      - "storage_refine"
+      - "ram_refine"
+
+  # Rounding for precision-sensitive measurements
+  - name: "Rounding"
+    params:
+      level: "column"
+      decimal_places: 1
+    applicable_columns:
+      - "weight_lb"
+      - "weight_oz"
+      - "weight_kg"
+      - "weight_g"
+      - "brand_refine"
+      - "cpu_brand_refine"
+      - "core_refine"
+      - "frequency_refine"
+      - "storage_refine"
+      - "ram_refine"
+
+  # Rounding for precision-sensitive measurements
+  - name: "Rounding"
+    params:
+      level: "column"
+      decimal_places: -1
+    applicable_columns:
+      - "weight_lb"
+      - "weight_oz"
+      - "weight_kg"
+      - "weight_g"
+      - "brand_refine"
+      - "cpu_brand_refine"
+      - "core_refine"
+      - "frequency_refine"
+      - "storage_refine"
+      - "ram_refine"
+
+
+  # Scaling for depth and magnitude values
+  - name: "ScalingShifting"
+    params:
+      level: "column"
+      scale_amount: 1.1  # 10% increase
+      shift_amount: 0.1
+    applicable_columns:
+      - "weight_lb"
+      - "weight_oz"
+      - "weight_kg"
+      - "weight_g"
+      - "brand_refine"
+      - "cpu_brand_refine"
+      - "core_refine"
+      - "frequency_refine"
+      - "storage_refine"
+      - "ram_refine"
+
+  # Scaling for depth and magnitude values
+  - name: "ScalingShifting"
+    params:
+      level: "column"
+      scale_amount: 2.54  # * 2.54 - convert centimeters to inches
+      shift_amount: 0.0
+    applicable_columns:
+      - "weight_lb"
+      - "weight_oz"
+      - "weight_kg"
+      - "weight_g"
+      - "brand_refine"
+      - "cpu_brand_refine"
+      - "core_refine"
+      - "frequency_refine"
+      - "storage_refine"
+      - "ram_refine"
+
+  # MissingValue pollution
+  - name: "MissingValue"
+    params:
+      level: "column"
+      missing_ratio: 1.0  # 10% chance of being missing
+    applicable_columns:
+      - "weight_lb"
+      - "weight_oz"
+      - "weight_kg"
+      - "weight_g"
+      - "brand_refine"
+      - "cpu_brand_refine"
+      - "core_refine"
+      - "frequency_refine"
+      - "storage_refine"
+      - "ram_refine"
